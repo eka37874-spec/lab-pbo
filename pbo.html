@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Aplikasi CRUD PBO - LocalStorage</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+    body { background-color: #f4f6f9; padding: 20px; }
+    .container { max-width: 950px; margin: 0 auto; background: white; padding: 25px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+    nav { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 2px solid #eee; padding-bottom: 10px; }
+    nav button { padding: 8px 16px; border: none; background: #e0e0e0; cursor: pointer; border-radius: 4px; font-weight: bold; }
+    nav button.active { background: #007bff; color: white; }
+    .page { display: none; }
+    .page.active { display: block; }
+    form { display: flex; flex-direction: column; gap: 12px; max-width: 400px; }
+    input, select { padding: 10px; border: 1px solid #ccc; border-radius: 4px; }
+    button.btn { padding: 10px 15px; background: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; }
+    button.btn-danger { background: #dc3545; }
+    button.btn-warning { background: #ffc107; color: #000; }
+    table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+    th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
+    th { background-color: #f8f9fa; }
+    .card { background: #f8f9fa; border: 1px solid #e9ecef; padding: 15px; border-radius: 6px; margin-top: 15px; }
+    .badge { padding: 4px 8px; border-radius: 12px; font-size: 12px; font-weight: bold; }
+    .badge-admin { background: #d4edda; color: #155724; }
+    .badge-regular { background: #cce5ff; color: #004085; }
+    .hidden { display: none !important; }
+    .demo-info { background: #fff3cd; border: 1px solid #ffeeba; padding: 12px; border-radius: 4px; margin-bottom: 15px; font-size: 14px; color: #856404; }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <!-- Navigasi Utama -->
+  <nav id="navbar">
+    <button id="nav-login" onclick="app.showPage('login')">Login</button>
+    <button id="nav-users" onclick="app.showPage('users')" class="auth-only hidden">Daftar User (CRUD)</button>
+    <button id="nav-profile" onclick="app.showPage('profile')" class="auth-only hidden">Profile</button>
+    <button id="nav-logout" onclick="app.logout()" class="auth-only hidden" style="margin-left: auto; background: #dc3545; color: white;">Logout</button>
+  </nav>
+
+  <!-- Halaman 1: Login -->
+  <div id="page-login" class="page active">
+    <h2>Form Login</h2>
+    <div class="demo-info">
+      <b>Akun Demo Tersedia untuk Dicoba:</b>
+      <ul style="margin-left: 20px; margin-top: 5px;">
+        <li>Admin: <code>admin</code> (Role: Admin)</li>
+        <li>User 1: <code>budi_santoso</code> (Role: Regular)</li>
+        <li>User 2: <code>siti_aminah</code> (Role: Regular)</li>
+        <li>User 3: <code>eko_prasetyo</code> (Role: Admin)</li>
+      </ul>
+    </div>
+    <form onsubmit="app.handleLogin(event)">
+      <input type="text" id="login-username" placeholder="Masukkan Username" required>
+      <button type="submit" class="btn">Masuk Sistem</button>
+    </form>
+  </div>
+
+  <!-- Halaman 2: Daftar User (CRUD Tabel) -->
+  <div id="page-users" class="page">
+    <h2>Manajemen Daftar User (CRUD)</h2>
+    <p style="color: #666; margin-top: 5px;">Kelola data seluruh pengguna sistem menggunakan konsep OOP.</p>
+    
+    <div class="card">
+      <h3 id="form-title">Tambah User Baru</h3>
+      <form id="user-form" onsubmit="app.handleFormSubmit(event)" style="margin-top: 10px;">
+        <input type="hidden" id="user-id">
+        <input type="text" id="input-username" placeholder="Username" required>
+        <input type="email" id="input-email" placeholder="Email" required>
+        <select id="input-role">
+          <option value="Regular">Regular User</option>
+          <option value="Admin">Admin User</option>
+        </select>
+        <div style="display: flex; gap: 10px;">
+          <button type="submit" class="btn" id="btn-save">Simpan Data</button>
+          <button type="button" class="btn btn-warning hidden" id="btn-cancel" onclick="app.resetForm()">Batal</button>
+        </div>
+      </form>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Username</th>
+          <th>Email</th>
+          <th>Role (PBO Class)</th>
+          <th>Aksi</th>
+        </tr>
+      </thead>
+      <tbody id="user-table-body">
+        <!-- Data dirender melalui JavaScript -->
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Halaman 3: Profile -->
+  <div id="page-profile" class="page">
+    <h2>Profil Pengguna Aktif</h2>
+    <div id="profile-content" class="card">
+      <!-- Data profil dirender melalui JavaScript -->
+    </div>
+  </div>
+</div>
+
+<script>
+// ==========================================
+// 1. CLASS IMPLEMENTASI KONSEP PBO (OOP)
+// ==========================================
+
+class User {
+  constructor(id, username, email, role) {
+    this.id = id;
+    this.username = username;
+    this.email = email;
+    this.role = role;
+  }
+
+  // Method Polimorfisme dasar
+  getRolePermissions() {
+    return "Akses dasar pengguna.";
+  }
+}
+
+// Pewarisan (Inheritance): AdminUser
+class AdminUser extends User {
+  constructor(id, username, email) {
+    super(id, username, email, 'Admin');
+  }
+
+  // Override Method (Polimorfisme)
+  getRolePermissions() {
+    return "Akses Penuh: Mengelola CRUD User, Mengatur Sistem, dan Melihat Data.";
+  }
+}
+
+// Pewarisan (Inheritance): RegularUser
+class RegularUser extends User {
+  constructor(id, username, email) {
+    super(id, username, email, 'Regular');
+  }
+
+  // Override Method (Polimorfisme)
+  getRolePermissions() {
+    return "Akses Terbatas: Hanya dapat melihat profil pribadi dan navigasi dasar.";
+  }
+}
+
+// Factory Pattern untuk instansiasi objek berdasarkan role
+class UserFactory {
+  static createUser(id, username, email, role) {
+    if (role === 'Admin') {
+      return new AdminUser(id, username, email);
+    }
+    return new RegularUser(id, username, email);
+  }
+}
+
+// ==========================================
+// 2. MANAJEMEN APLIKASI & LOCALSTORAGE
+// ==========================================
+
+class AppManager {
+  constructor() {
+    this.currentUser = null;
+    this.initDatabase();
+  }
+
+  // Inisialisasi Data Demo User ke LocalStorage
+  initDatabase() {
+    if (!localStorage.getItem('users')) {
+      const defaultUsers = [
+        { id: 1, username: 'admin', email: 'admin@system.com', role: 'Admin' },
+        { id: 2, username: 'budi_santoso', email: 'budi@mail.com', role: 'Regular' },
+        { id: 3, username: 'siti_aminah', email: 'siti@mail.com', role: 'Regular' },
+        { id: 4, username: 'eko_prasetyo', email: 'eko@company.com', role: 'Admin' },
+        { id: 5, username: 'dewi_lestari', email: 'dewi@mail.com', role: 'Regular' }
+      ];
+      localStorage.setItem('users', JSON.stringify(defaultUsers));
+    }
+  }
+
+  getUsersFromStorage() {
+    const rawData = JSON.parse(localStorage.getItem('users')) || [];
+    // Memetakan plain JSON ke instance class PBO (Inheritance & Factory)
+    return rawData.map(u => UserFactory.createUser(u.id, u.username, u.email, u.role));
+  }
+
+  saveUsersToStorage(users) {
+    const plainData = users.map(u => ({ id: u.id, username: u.username, email: u.email, role: u.role }));
+    localStorage.setItem('users', JSON.stringify(plainData));
+  }
+
+  // Navigasi Antar Halaman
+  showPage(pageId) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+
+    document.getElementById(`page-${pageId}`).classList.add('active');
+    const activeNav = document.getElementById(`nav-${pageId}`);
+    if (activeNav) activeNav.classList.add('active');
+
+    if (pageId === 'users') this.renderTable();
+    if (pageId === 'profile') this.renderProfile();
+  }
+
+  // Fitur Login
+  handleLogin(e) {
+    e.preventDefault();
+    const usernameInput = document.getElementById('login-username').value.trim();
+    const users = this.getUsersFromStorage();
+
+    const foundUser = users.find(u => u.username.toLowerCase() === usernameInput.toLowerCase());
+
+    if (foundUser) {
+      this.currentUser = foundUser;
+      this.updateUIState(true);
+      this.showPage('users');
+      document.getElementById('login-username').value = '';
+    } else {
+      alert('Username tidak ditemukan! Silakan cek daftar akun demo di atas.');
+    }
+  }
+
+  // Logout
+  logout() {
+    this.currentUser = null;
+    this.updateUIState(false);
+    this.showPage('login');
+  }
+
+  updateUIState(isLoggedIn) {
+    const authElements = document.querySelectorAll('.auth-only');
+    authElements.forEach(el => {
+      if (isLoggedIn) el.classList.remove('hidden');
+      else el.classList.add('hidden');
+    });
+
+    const loginNav = document.getElementById('nav-login');
+    if (isLoggedIn) loginNav.classList.add('hidden');
+    else loginNav.classList.remove('hidden');
+  }
+
+  // CRUD: Read (Render Tabel Daftar User)
+  renderTable() {
+    const tbody = document.getElementById('user-table-body');
+    tbody.innerHTML = '';
+    const users = this.getUsersFromStorage();
+
+    users.forEach(user => {
+      const badgeClass = user.role === 'Admin' ? 'badge-admin' : 'badge-regular';
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${user.id}</td>
+        <td><b>${user.username}</b></td>
+        <td>${user.email}</td>
+        <td><span class="badge ${badgeClass}">${user.role} (${user.constructor.name})</span></td>
+        <td>
+          <button class="btn btn-warning" onclick="app.editUser(${user.id})">Edit</button>
+          <button class="btn btn-danger" onclick="app.deleteUser(${user.id})">Hapus</button>
+        </td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
+
+  // CRUD: Create & Update
+  handleFormSubmit(e) {
+    e.preventDefault();
+    const id = document.getElementById('user-id').value;
+    const username = document.getElementById('input-username').value.trim();
+    const email = document.getElementById('input-email').value.trim();
+    const role = document.getElementById('input-role').value;
+
+    let users = this.getUsersFromStorage();
+
+    if (id) {
+      users = users.map(u => u.id === parseInt(id) ? UserFactory.createUser(parseInt(id), username, email, role) : u);
+    } else {
+      const newId = users.length > 0 ? Math.max(...users.map(u => u.id)) + 1 : 1;
+      const newUser = UserFactory.createUser(newId, username, email, role);
+      users.push(newUser);
+    }
+
+    this.saveUsersToStorage(users);
+    this.resetForm();
+    this.renderTable();
+  }
+
+  // CRUD: Edit (Load data ke form)
+  editUser(id) {
+    const users = this.getUsersFromStorage();
+    const user = users.find(u => u.id === id);
+
+    if (user) {
+      document.getElementById('user-id').value = user.id;
+      document.getElementById('input-username').value = user.username;
+      document.getElementById('input-email').value = user.email;
+      document.getElementById('input-role').value = user.role;
+
+      document.getElementById('form-title').innerText = `Edit User: ${user.username}`;
+      document.getElementById('btn-save').innerText = 'Update Data';
+      document.getElementById('btn-cancel').classList.remove('hidden');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }
+
+  // CRUD: Delete
+  deleteUser(id) {
+    if (confirm('Apakah Anda yakin ingin menghapus user ini dari sistem?')) {
+      let users = this.getUsersFromStorage();
+      users = users.filter(u => u.id !== id);
+      this.saveUsersToStorage(users);
+      this.renderTable();
+    }
+  }
+
+  resetForm() {
+    document.getElementById('user-id').value = '';
+    document.getElementById('user-form').reset();
+    document.getElementById('form-title').innerText = 'Tambah User Baru';
+    document.getElementById('btn-save').innerText = 'Simpan Data';
+    document.getElementById('btn-cancel').classList.add('hidden');
+  }
+
+  // Halaman Profile (Menunjukkan Polimorfisme Objek Aktif)
+  renderProfile() {
+    const container = document.getElementById('profile-content');
+    if (!this.currentUser) {
+      container.innerHTML = '<p>Silakan login terlebih dahulu.</p>';
+      return;
+    }
+
+    container.innerHTML = `
+      <p style="margin-bottom: 8px;"><b>ID User:</b> ${this.currentUser.id}</p>
+      <p style="margin-bottom: 8px;"><b>Username:</b> ${this.currentUser.username}</p>
+      <p style="margin-bottom: 8px;"><b>Email:</b> ${this.currentUser.email}</p>
+      <p style="margin-bottom: 8px;"><b>Role Instance:</b> ${this.currentUser.role} (${this.currentUser.constructor.name})</p>
+      <hr style="margin: 12px 0; border: 0; border-top: 1px solid #ddd;">
+      <p style="color: #0056b3;"><b>Hak Akses Sistem (Polimorfisme Output):</b><br>${this.currentUser.getRolePermissions()}</p>
+    `;
+  }
+}
+
+// Inisialisasi Aplikasi
+const app = new AppManager();
+</script>
+
+</body>
+</html>
